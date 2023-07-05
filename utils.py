@@ -151,6 +151,8 @@ def define_router(version, input_nc, input_width, input_height, **kwargs):
         return models.RouterGAP_TwoFClayers(input_nc, input_width, input_height, **kwargs)
     elif version == 6:  # 1 conv + GAP + 2 fc layers
         return models.RouterGAPwithConv_TwoFClayers(input_nc, input_width, input_height, **kwargs)
+    elif version == 7:  # MLP with 2 hidden layer
+        return models.Router_MLP_h2(input_nc, input_width, input_height, **kwargs)
     else:
         raise NotImplementedError("Specified router module not available!")
 

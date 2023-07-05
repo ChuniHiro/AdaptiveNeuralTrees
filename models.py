@@ -815,6 +815,45 @@ class Router_MLP_h1(nn.Module):
             x = self.sigmoid(x)
             return ops.ST_Indicator()(x)
 
+class Router_MLP_h2(nn.Module):
+    """  MLP with 2 hidden layer """
+    def __init__(self, input_nc,  input_width, input_height,
+                 kernel_size=28,
+                 soft_decision=True,
+                 stochastic=False,
+                 reduction_rate=2,
+                 **kwargs):
+        super(Router_MLP_h2, self).__init__()
+        self.soft_decision = soft_decision
+        self.stochastic=stochastic
+
+        width = input_nc*input_width*input_height
+        self.fc1 = nn.Linear(width, width/reduction_rate + 1)
+        self.fc2 = nn.Linear(width/reduction_rate + 1, width/(reduction_rate*2) + 1)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        # 2 fc layers:
+        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x)).squeeze()
+        # get probability of "left" or "right"
+        x = self.output_controller(x)
+        return x
+                
+    def output_controller(self, x):
+        # soft decision
+        if self.soft_decision:
+            return self.sigmoid(x)
+
+        # stochastic hard decision:
+        if self.stochastic:
+            x = self.sigmoid(x)
+            return ops.ST_StochasticIndicator()(x)
+        else:
+            x = self.sigmoid(x)
+            return ops.ST_Indicator()(x)
+
 
 class RouterGAP_TwoFClayers(nn.Module):
     """ Routing function:

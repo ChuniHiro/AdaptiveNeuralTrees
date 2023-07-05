@@ -138,8 +138,12 @@ def train(model, data_loader, optimizer, node_idx):
         y_pred, p_out = model(x)
 
         loss = F.nll_loss(y_pred, y)
-        train_epoch_loss += loss.data[0] * y.size(0)
-        train_loss += loss.data[0] * y.size(0)
+
+        # print("check loss.data, y.size")
+        # print(loss.data, y.size())
+        train_epoch_loss += loss.data * y.size()[0]
+        # train_loss += loss.data[0] * y.size(0)
+        train_loss += loss.data * y.size()[0]
         loss.backward()
         optimizer.step()
 
@@ -164,7 +168,8 @@ def train(model, data_loader, optimizer, node_idx):
     train_epoch_loss /= NUM_TRAIN
     records['train_epoch_loss'].append(train_epoch_loss)
     if train_epoch_loss < records['train_best_loss']:
-        records['train_best_loss'] = train_epoch_loss
+        # train_epoch_loss = str(train_epoch_loss.cpu().numpy())
+        records['train_best_loss'] = str(train_epoch_loss.cpu().numpy())
 
     print('\nTrain set: Average loss: {:.4f}'.format(train_epoch_loss))
 
@@ -184,13 +189,14 @@ def valid(model, data_loader, node_idx, struct):
         # sum up batch loss
         valid_epoch_loss += F.nll_loss(
             output, target, size_average=False,
-        ).data[0]
+        ).data
 
         pred = output.data.max(1, keepdim=True)[1]
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
     valid_epoch_loss /= NUM_VALID
     valid_epoch_accuracy = 100. * correct / NUM_VALID
+    # valid_epoch_accuracy = str(valid_epoch_accuracy.cpu().numpy())
     records['valid_epoch_loss'].append(valid_epoch_loss)
     records['valid_epoch_accuracy'].append(valid_epoch_accuracy)
 
@@ -198,7 +204,7 @@ def valid(model, data_loader, node_idx, struct):
         records['valid_best_loss'] = valid_epoch_loss
 
     if valid_epoch_accuracy > records['valid_best_accuracy']:
-        records['valid_best_accuracy'] = valid_epoch_accuracy
+        records['valid_best_accuracy'] = str(valid_epoch_accuracy.cpu().numpy())
 
     # see if the current node is root and undergoing the initial training
     # prior to the growth phase.
@@ -207,28 +213,28 @@ def valid(model, data_loader, node_idx, struct):
     # save the best split model during node-wise training as model_tmp.pth
     if not is_init_root_train and model.split and \
             valid_epoch_loss < records['valid_best_loss_nodes_split'][node_idx]:
-        records['valid_best_loss_nodes_split'][node_idx] = valid_epoch_loss
+        records['valid_best_loss_nodes_split'][node_idx] = valid_epoch_loss.cpu().numpy()
         checkpoint_model('model_tmp.pth', model=model)
         checkpoint_msc(struct, records)
 
     # save the best extended model during node-wise training as model_ext.pth
     if not is_init_root_train and model.extend and \
             valid_epoch_loss < records['valid_best_loss_nodes_ext'][node_idx]:
-        records['valid_best_loss_nodes_ext'][node_idx] = valid_epoch_loss
+        records['valid_best_loss_nodes_ext'][node_idx] = valid_epoch_loss.cpu().numpy()
         checkpoint_model('model_ext.pth', model=model)
         checkpoint_msc(struct, records)
 
     # separately store best performance for the initial root training
     if is_init_root_train \
             and valid_epoch_loss < records['valid_best_root_nosplit']:
-        records['valid_best_root_nosplit'] = valid_epoch_loss
+        records['valid_best_root_nosplit'] = valid_epoch_loss.cpu().numpy()
         checkpoint_model('model_tmp.pth', model=model)
         checkpoint_msc(struct, records)
 
     # saving model during the refinement (fine-tuning) phase
     if not is_init_root_train and \
             valid_epoch_loss < records['valid_best_loss_nodes'][node_idx]:
-        records['valid_best_loss_nodes'][node_idx] = valid_epoch_loss
+        records['valid_best_loss_nodes'][node_idx] = valid_epoch_loss.cpu().numpy()
         if not model.split and not model.extend:
             checkpoint_model('model_tmp.pth', model=model)
             checkpoint_msc(struct, records)
@@ -255,7 +261,7 @@ def test(model, data_loader):
             data, target = data.cuda(), target.cuda()
         data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
-        test_loss += F.nll_loss(output, target, size_average=False).data[0]
+        test_loss += F.nll_loss(output, target, size_average=False).data
         pred = output.data.max(1, keepdim=True)[1]
         correct += pred.eq(target.data.view_as(pred)).cpu().sum()
 
@@ -332,11 +338,13 @@ def checkpoint_msc(struct, data_dict):
         json.dump(struct, f)
     print("Tree structure saved to {}".format(struct_path))
 
-    # save the dictionary as jason file:
-    dict_path = save_dir + "/records.json"
-    with open(dict_path, 'w') as f_d:
-        json.dump(data_dict, f_d)
-    print("Other data saved to {}".format(dict_path))
+    # # save the dictionary as jason file:
+    # dict_path = save_dir + "/records.json"
+    # print("check data_dict")
+    # print(data_dict)
+    # with open(dict_path, 'w') as f_d:
+    #     json.dump(data_dict, f_d)
+    # print("Other data saved to {}".format(dict_path))
 
 
 def get_decision(criteria, node_idx, tree_struct):
