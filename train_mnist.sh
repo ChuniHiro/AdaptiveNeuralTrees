@@ -25,7 +25,7 @@
 python tree.py --experiment test_ant_mnist    \
                --subexperiment MLP_IDENTITY_LC \
                --dataset mnist   \
-               --router_ver 4      \
+               --router_ver 7      \
                --router_ngf 128     \
                --router_k 3        \
                --transformer_ver 1    \
