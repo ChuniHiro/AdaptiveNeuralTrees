@@ -25,7 +25,7 @@
 python tree.py --experiment test_ant_mnist    \
                --subexperiment MLP_IDENTITY_LC \
                --dataset mnist   \
-               --router_ver 7     \
+               --router_ver 7      \
                --router_ngf 128     \
                --router_k 3        \
                --transformer_ver 1    \
@@ -34,7 +34,7 @@ python tree.py --experiment test_ant_mnist    \
                --solver_ver 1        \
                --batch_norm         \
                --maxdepth 10       \
-               --batch-size 10000    \
+               --batch-size 2500    \
                --augmentation_on  \
                --scheduler step_lr  \
                --criteria avg_valid_loss  \
