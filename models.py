@@ -200,7 +200,23 @@ class Tree(nn.Module):
 
         # combine and perform inference:
         y_pred = 0.0
+        # print("debug")
+        # print("tlist")
+        # print(t_list)
+        # print("rlist")
+        # print(r_list)
+        # print("slist")
+        # print(s_list)
         for r, s in zip(r_list, s_list):
+            
+            # print("inside loop")
+            # print(r)
+            # print(r.shape)
+            # print(s.shape)
+            # print(torch.exp(s).shape)
+            # print(r * torch.exp(s))
+            # print(y_pred)
+            # print()
             y_pred += r * torch.exp(s)
 
         out = torch.log(1e-10 + y_pred)
@@ -830,18 +846,25 @@ class Router_MLP_h2(nn.Module):
         width = input_nc*input_width*input_height
         self.fc1 = nn.Linear(width, width/reduction_rate + 1)
         self.fc2 = nn.Linear(width/reduction_rate + 1, width/(reduction_rate*2) + 1)
+        self.fc3 = nn.Linear(width/(reduction_rate*2) + 1, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         # 2 fc layers:
         x = x.view(x.size(0), -1)
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x)).squeeze()
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x)).squeeze()
         # get probability of "left" or "right"
         x = self.output_controller(x)
+        # print("within MLP_h2")
+        # print(x.shape)
         return x
                 
     def output_controller(self, x):
+        
+        # print("self.soft_decision",self.soft_decision)
+        # print("self.stochastic", self.stochastic)
         # soft decision
         if self.soft_decision:
             return self.sigmoid(x)

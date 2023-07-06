@@ -8,7 +8,7 @@ import sys
 import json
 import time
 import numpy as np
-
+import pickle
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -169,7 +169,8 @@ def train(model, data_loader, optimizer, node_idx):
     records['train_epoch_loss'].append(train_epoch_loss)
     if train_epoch_loss < records['train_best_loss']:
         # train_epoch_loss = str(train_epoch_loss.cpu().numpy())
-        records['train_best_loss'] = str(train_epoch_loss.cpu().numpy())
+        # records['train_best_loss'] = str(train_epoch_loss.cpu().numpy())
+        records['train_best_loss'] = train_epoch_loss.cpu().numpy()
 
     print('\nTrain set: Average loss: {:.4f}'.format(train_epoch_loss))
 
@@ -201,10 +202,11 @@ def valid(model, data_loader, node_idx, struct):
     records['valid_epoch_accuracy'].append(valid_epoch_accuracy)
 
     if valid_epoch_loss < records['valid_best_loss']:
-        records['valid_best_loss'] = valid_epoch_loss
+        records['valid_best_loss'] = valid_epoch_loss.cpu().numpy()
 
     if valid_epoch_accuracy > records['valid_best_accuracy']:
-        records['valid_best_accuracy'] = str(valid_epoch_accuracy.cpu().numpy())
+        # records['valid_best_accuracy'] = str(valid_epoch_accuracy.cpu().numpy())
+        records['valid_best_accuracy'] = valid_epoch_accuracy.cpu().numpy()
 
     # see if the current node is root and undergoing the initial training
     # prior to the growth phase.
@@ -327,24 +329,73 @@ def checkpoint_msc(struct, data_dict):
             meta information about each node of the tree.
         data_dict (dict) : data about the experiment (e.g. loss, configurations)
     """
+    
     if not(os.path.exists(os.path.join("./experiments", args.dataset, args.experiment, args.subexperiment))):
         os.makedirs(os.path.join("./experiments", args.dataset, args.experiment, args.subexperiment, 'figures'))
         os.makedirs(os.path.join("./experiments", args.dataset, args.experiment, args.subexperiment, 'checkpoints'))
 
-    # save the tree structures as a json file:
+    # print("debug struct")
+    # print(struct)
+    # # convert struct to json serializable
+    # for i in range(len(struct)):
+        
+    #     # if struct[i]
+    #     if isinstance(struct[i], torch.Tensor):
+    #         struct[i] = str(struct[i].cpu().numpy())
+            
+    # # save the tree structures as a json file:
     save_dir = "./experiments/{}/{}/{}/{}".format(args.dataset,args.experiment,args.subexperiment,'checkpoints')
-    struct_path = save_dir + "/tree_structures.json"
+    # struct_path = save_dir + "/tree_structures.json"
+    struct_path = save_dir + "/tree_structures.pkl"
     with open(struct_path, 'w') as f:
-        json.dump(struct, f)
+        
+        pickle.dump(struct, f)
+    #     json.dump(struct, f)
     print("Tree structure saved to {}".format(struct_path))
 
     # # save the dictionary as jason file:
-    # dict_path = save_dir + "/records.json"
+    dict_path = save_dir + "/records.pkl"
     # print("check data_dict")
-    # print(data_dict)
-    # with open(dict_path, 'w') as f_d:
+    # # print(data_dict)
+    # # TO DO
+    # # convert dict to json serializable
+    # for key, val in data_dict.items():
+        
+    #     # print(key, val)
+    #     if isinstance(val, torch.Tensor):
+            
+    #         data_dict[key] = str(val.cpu().numpy())
+            
+        
+    #     if isinstance(val, list) and len(val) > 0:
+            
+    #         newlist = []
+    #         for instance in val:
+                
+    #             if isinstance(instance,torch.Tensor ):
+                    
+    #                 newlist.append(str(instance.cpu().numpy()))
+                    
+    #             elif isinstance(instance, np.ndarray):
+                
+    #                 newlist.append(str(instance))
+                    
+    #             else:
+    #                 newlist.append(instance)
+                    
+    #         data_dict[key] = newlist
+    #         # data_dict[key] = [str(tensor.cpu().numpy()) for tensor in val]
+            
+    #     if isinstance(val, np.ndarray):
+            
+    #         data_dict[key] = str(val)
+    
+    # print("after convert")
+    # print(data_dict) 
+    with open(dict_path, 'w') as f_d:
+        pickle.dump(data_dict, f_d)
     #     json.dump(data_dict, f_d)
-    # print("Other data saved to {}".format(dict_path))
+    print("Other data saved to {}".format(dict_path))
 
 
 def get_decision(criteria, node_idx, tree_struct):
@@ -489,6 +540,7 @@ def optimize_fixed_tree(
 
 
 def grow_ant_nodewise():
+    
     """The main function for optimising an ANT """
 
     # ############## 0: Define the root node and optimise ###################
@@ -513,13 +565,12 @@ def grow_ant_nodewise():
         model, tree_struct,
         train_loader, valid_loader, test_loader, args.epochs_node, node_idx=0,
     )
-    checkpoint_model('model.pth', struct=tree_struct, modules=tree_modules)
-    checkpoint_msc(tree_struct, records)
-
+    
     # ######################## 1: Growth phase starts ########################
     nextind = 1
     last_node = 0
     for lyr in range(args.maxdepth):
+        
         print("---------------------------------------------------------------")
         print("\nAt layer " + str(lyr))
         for node_idx in range(len(tree_struct)):
@@ -597,12 +648,17 @@ def grow_ant_nodewise():
                 best_tr_loss_after_split = records['train_best_loss']
                 best_va_loss_adter_split = records['valid_best_loss_nodes_split'][node_idx]
                 best_te_loss_after_split = records['test_best_loss']
+                # print("debug loss")
+                # print(best_tr_loss)
+                # print(best_tr_loss_after_split)
+                # print(best_va_loss)
+                # print(best_va_loss_adter_split)
                 tree_struct[node_idx]['train_accuracy_gain_split'] \
                     = best_tr_loss - best_tr_loss_after_split
                 tree_struct[node_idx]['valid_accuracy_gain_split'] \
                     = best_va_loss - best_va_loss_adter_split
                 tree_struct[node_idx]['test_accuracy_gain_split'] \
-                    = best_te_loss - best_te_loss_after_split
+                    = best_te_loss.cpu() - best_te_loss_after_split.cpu()
 
                 print("\n----------- Optimizing an extension --------------")
                 if not(meta_e['identity']):
@@ -679,6 +735,7 @@ def grow_ant_nodewise():
                 tree_struct[node_idx]['visited'] = True
 
                 # save the model and tree structures:
+                print("saved the model.pth")
                 checkpoint_model('model.pth', struct=tree_struct, modules=tree_modules,
                                  data_loader=test_loader,
                                  figname='hist_split_node_{:03d}.png'.format(node_idx))
