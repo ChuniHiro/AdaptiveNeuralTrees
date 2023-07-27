@@ -8,7 +8,8 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import numpy as np
-import json
+# import json
+import pickle
 import ops
 import os
 import utils
@@ -300,7 +301,12 @@ def visualise_class_distributions_uptonode(current_node, model, data_loader,
 def print_performance(jasonfile, model_name='model_1', figsize=(5,5)) :
     """ Inspect performance of a single model
     """
-    records = json.load(open(jasonfile, 'r'))
+    # records = json.load(open(jasonfile, 'r'))
+    # record = pickle.load(open(jasonfile, 'r'))
+    with open(jasonfile, "rb") as file:
+
+            records = pickle.load(file, encoding='latin1')
+            
     print('\n'+model_name)
     print("        train_best_loss: {}".format(records['train_best_loss']))
     print("        valid_best_loss: {}".format(records['valid_best_loss']))
@@ -329,7 +335,16 @@ def plot_performance(jasonfiles, model_names=[], ymin=0.0, ymax=1.0, figsize=(5,
 
     for i, f in enumerate(jasonfiles):
         # load the information: 
-        records = json.load(open(f, 'r'))
+        # records = json.load(open(f, 'r'))
+        # with open("data.pickle", "rb") as file:
+            # loaded_data = pickle.load(file)
+        # print(f)
+        with open(f, "rb") as file:
+
+            # records = pickle.load(file, encoding='latin1')
+            records = pickle.load(file)
+            # data = file.read()  # Read the binary data from the file
+            # records = pickle.loads(data, encoding='latin1')  # Load the pickled data using pickle.loads()
         
         # Plot train/test loss
         plt.plot(np.arange(len(records['valid_epoch_loss'])), np.array(records['valid_epoch_loss']),
@@ -364,7 +379,12 @@ def plot_accuracy(
 
     for i, f in enumerate(jasonfiles):
         # load the information: 
-        records = json.load(open(f, 'r'))
+        # records = json.load(open(f, 'r'))
+        # records = pickle.load(open(f, 'r'))
+        with open(f, "rb") as file:
+
+            records = pickle.load(file)
+            # records = pickle.load(file, encoding='latin1')
         
         # Plot train/test loss
         plt.plot(np.arange(len(records['test_epoch_accuracy']), dtype=float), np.array(records['test_epoch_accuracy']), 
@@ -391,7 +411,11 @@ def compute_accuracy(jasonfiles, model_names=[], name =''):
     print('\nPerformance: '+ name)
     for i, f in enumerate(jasonfiles):
         # load the information: 
-        records = json.load(open(f, 'r'))
+        # records = json.load(open(f, 'r'))
+        # records = pickle.load(open(f, 'r'))
+        with open(f, "rb") as file:
+
+            records = pickle.load(file, encoding='latin1')
         
         # choose the best epoch based on validation loss:
         best_epoch_loss = records['valid_epoch_loss'].index(min(records['valid_epoch_loss']))

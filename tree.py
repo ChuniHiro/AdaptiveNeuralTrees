@@ -347,7 +347,7 @@ def checkpoint_msc(struct, data_dict):
     save_dir = "./experiments/{}/{}/{}/{}".format(args.dataset,args.experiment,args.subexperiment,'checkpoints')
     # struct_path = save_dir + "/tree_structures.json"
     struct_path = save_dir + "/tree_structures.pkl"
-    with open(struct_path, 'w') as f:
+    with open(struct_path, 'wb') as f:
         
         pickle.dump(struct, f)
     #     json.dump(struct, f)
@@ -392,7 +392,7 @@ def checkpoint_msc(struct, data_dict):
     
     # print("after convert")
     # print(data_dict) 
-    with open(dict_path, 'w') as f_d:
+    with open(dict_path, 'wb') as f_d:
         pickle.dump(data_dict, f_d)
     #     json.dump(data_dict, f_d)
     print("Other data saved to {}".format(dict_path))
