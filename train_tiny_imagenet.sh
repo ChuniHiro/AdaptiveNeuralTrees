@@ -1,0 +1,22 @@
+python tree.py --experiment test_ant_tiny_imagenet     \
+               --subexperiment run0 \
+               --dataset tiny-imagenet   \
+               --lr 0.005 \
+               --router_ver 3  \
+               --router_ngf 64  \
+               --router_k 3  \
+               --transformer_ver 5   \
+               --transformer_ngf 64 \
+               --transformer_k 3 \
+               --solver_ver 8  \
+               --batch_norm   \
+               --maxdepth 10 \
+               --batch-size 16   \
+               --augmentation_on  \
+               --scheduler step_lr  \
+               --criteria avg_valid_loss  \
+               --epochs_patience 20 \
+               --epochs_node 10   \
+               --epochs_finetune 20 \
+               --seed 1    \
+               --num_workers 0  
