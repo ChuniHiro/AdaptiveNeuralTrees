@@ -170,6 +170,10 @@ def define_solver(version, input_nc, input_width, input_height, **kwargs):
         return models.MLP_AlexNet(input_nc, input_width, input_height, **kwargs)
     elif version == 6:  # GAP + 1 FC layer
         return models.Solver_GAP_OneFClayers(input_nc, input_width, input_height, **kwargs)
+    elif version == 7:  # GAP + 1 FC layer
+        return models.Solver_GAP_OneFClayers_class100(input_nc, input_width, input_height, **kwargs)
+    elif version == 8:  # GAP + 1 FC layer
+        return models.Solver_GAP_OneFClayers_class200(input_nc, input_width, input_height, **kwargs)
     else:
         raise NotImplementedError("Specified solver module not available!")
 

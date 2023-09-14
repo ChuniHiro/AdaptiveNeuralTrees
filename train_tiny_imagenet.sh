@@ -1,5 +1,5 @@
 python tree.py --experiment test_ant_tiny_imagenet     \
-               --subexperiment run0 \
+               --subexperiment run1 \
                --dataset tiny-imagenet   \
                --lr 0.005 \
                --router_ver 3  \
